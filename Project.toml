@@ -26,6 +26,7 @@ SpecialFunctions = "276daf66-3868-5448-9aa4-cd146d93841b"
 StaticArraysCore = "1e83bf80-4336-4d27-bf5d-d5a4f845583c"
 Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
 StochasticDiffEq = "789caeaf-c7a9-5a7d-9973-96adeb23e2a0"
+YAXArrays = "c21b50f5-aa40-41ea-b809-c0f5e47bfa5c"
 
 [weakdeps]
 CUDA = "052768ef-5323-5732-b1bb-66c8b64840ba"
@@ -68,4 +69,5 @@ SpecialFunctions = "2"
 StaticArraysCore = "1"
 Statistics = "1"
 StochasticDiffEq = "6"
+YAXArrays = "0.6.1"
 julia = "1.10"
