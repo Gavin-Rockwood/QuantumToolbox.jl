@@ -1,4 +1,4 @@
-export get_floquet_basis, floquet_basis, propagate_floquet_modes
+export get_floquet_basis, Floquet_Basis, propagate_floquet_modes, floquet_sweep
 
 
 @doc raw"""
