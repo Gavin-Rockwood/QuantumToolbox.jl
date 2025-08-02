@@ -30,9 +30,7 @@ Example:
 struct EnsembleTimeEvolutionProblem{PT<:TimeEvolutionProblem,PF<:Function}
     prob::PT
     func::PF
-    iterate_params::Bool
     full_iterator::AbstractArray 
-    n_states::Int
     trajectories::Int
 end
 
@@ -41,47 +39,23 @@ function sesolve(prob::EnsembleTimeEvolutionProblem, alg::OrdinaryDiffEqAlgorith
    ensemble_prob = EnsembleProblem(prob.prob.prob, prob_func = prob.func)
    sols = solve(ensemble_prob, alg, backend, trajectories = prob.trajectories)
    
-   to_return = []
-    if prob.iterate_params
-        to_return = [[] for _ in 1:prob.n_states]
-        for i in 1:length(sols)
-            state = mod(i, prob.n_states)
-            if state == 0
-                state = prob.n_states
-            end
-            ψt = map(ϕ -> QuantumObject(ϕ, type = Ket(), dims = prob.prob.dimensions), sols[i].u)
-            sol = TimeEvolutionSol(
-                        prob.prob.times,
-                        sols[i].t,
-                        ψt,
-                        _get_expvals(sols[i], SaveFuncSESolve),
-                        sols[i].retcode,
-                        sols[i].alg,
-                        sols[i].prob.kwargs[:abstol],
-                        sols[i].prob.kwargs[:reltol],
-                    )
-            to_push = (sol, prob.full_iterator[i][2])
-            push!(to_return[state], to_push)
-        end
-    else
-        for i in 1:prob.n_states
-            ψt = map(ϕ -> QuantumObject(ϕ, type = Ket(), dims = prob.prob.dimensions), sols[i].u)
-            sol = TimeEvolutionSol(
-                        prob.prob.times,
-                        sols[i].t,
-                        ψt,
-                        _get_expvals(sols[i], SaveFuncSESolve),
-                        sols[i].retcode,
-                        sols[i].alg,
-                        sols[i].prob.kwargs[:abstol],
-                        sols[i].prob.kwargs[:reltol],
-                    )
-            push!(to_return, sol)
-        end
+   to_return = Array{TimeEvolutionSol}(undef, size(prob.full_iterator))
+    for i in 1:length(sols)
+        ψt = map(ϕ -> QuantumObject(ϕ, type = Ket(), dims = prob.prob.dimensions), sols[i].u)
+        sol = TimeEvolutionSol(
+                    prob.prob.times,
+                    sols[i].t,
+                    ψt,
+                    _get_expvals(sols[i], SaveFuncSESolve),
+                    sols[i].retcode,
+                    sols[i].alg,
+                    sols[i].prob.kwargs[:abstol],
+                    sols[i].prob.kwargs[:reltol],
+                )
+        to_return[CartesianIndices(to_return)[i]] = sol
     end
+    
     return to_return
-
-   return sols
 end
 
 function sesolve(
@@ -133,7 +107,7 @@ function sesolve(
         end
     end
     
-    ensemble_prob = EnsembleTimeEvolutionProblem(prob_init, ensemble_func, iterate_params, full_iterator, length(ψ0s), trajectories)
+    ensemble_prob = EnsembleTimeEvolutionProblem(prob_init, ensemble_func, full_iterator, trajectories)
     
     return sesolve(ensemble_prob, alg; backend = backend)
 end
