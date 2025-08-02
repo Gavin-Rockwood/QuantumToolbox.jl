@@ -39,8 +39,8 @@ function get_floquet_basis(H::Union{QuantumObject, QobjEvo}, T; propagator_kwarg
 
     eigvals, eigvecs = eigenstates(U_T)
     eigvals = -angle.(eigvals)/T#imag(log.(λs))
-    
-    return floquet_basis(eigvals, t->propagate_floquet_modes(eigvecs, H, t, T; propagator_kwargs...), T)
+
+    return Floquet_Basis(eigvals, t->propagate_floquet_modes(eigvecs, H, t, T; propagator_kwargs...), T)
 end
 
 function propagate_floquet_modes(modes_t0, H, t, T; propagator_kwargs...)
