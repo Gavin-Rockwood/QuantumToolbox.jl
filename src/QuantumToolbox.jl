@@ -117,9 +117,6 @@ include("time_evolution/mcsolve.jl")
 include("time_evolution/ssesolve.jl")
 include("time_evolution/smesolve.jl")
 include("time_evolution/time_evolution_dynamical.jl")
-include("time_evolution/ensemble_sesolve.jl")
-include("time_evolution/dynamic_tools/propagator.jl")
-include("time_evolution/dynamic_tools/floquet.jl")
 
 # Others
 include("correlations.jl")
@@ -132,7 +129,6 @@ include("negativity.jl")
 include("steadystate.jl")
 include("spectrum.jl")
 include("visualization.jl")
-include("tracking.jl")
 
 
 # deprecated functions
