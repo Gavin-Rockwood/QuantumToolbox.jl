@@ -65,45 +65,28 @@ function sesolve(
     alg::OrdinaryDiffEqAlgorithm = Tsit5(),
     e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
     params = NullParameters(),
-    iterate_params::Bool = false,
     progress_bar::Union{Val,Bool} = Val(false),
     inplace::Union{Val,Bool} = Val(true),
     backend = EnsembleThreads(),
     kwargs...,) where T<:QuantumObject{Ket}
-
-    if !iterate_params
-        params_to_iterate = [params]
-    else
-        params_to_iterate = params
-    end
-    params_init = params_to_iterate[1]
     
     prob_init = sesolveProblem(
         H,
         ψ0s[1],
         tlist;
         e_ops = e_ops,
-        params = params_init,
+        params = params,
         progress_bar = progress_bar,
         inplace = inplace,
         kwargs...,
-    )
-
-    full_iterator = Matrix{Tuple{QuantumObject{Ket}, typeof(params_to_iterate[1])}}(undef, length(ψ0s), length(params_to_iterate))
-    for i in 1:length(ψ0s)
-        for j in 1:length(params_to_iterate)
-            full_iterator[i, j] = (ψ0s[i], params_to_iterate[j])
-        end
-    end
+        )
     
-    trajectories = length(full_iterator)
+    trajectories = length(ψ0s)
 
     function ensemble_func(prob, i, repeat)
-        p = full_iterator[i][2]
-        return remake(prob, u0 = full_iterator[i][1].data; p = p)
+        return remake(prob, u0 = ψ0s[i].data)
     end
-    
-    ensemble_prob = EnsembleTimeEvolutionProblem(prob_init, ensemble_func, full_iterator, trajectories)
-    
+
+    ensemble_prob = EnsembleTimeEvolutionProblem(prob_init, ensemble_func, ψ0s, trajectories)
     return sesolve(ensemble_prob, alg; backend = backend)
 end
