@@ -60,22 +60,24 @@ end
 
 function sesolve(
     H::Union{AbstractQuantumObject{Operator},Tuple},
-    ψ0s::Union{Vector{T}, Tuple{T}},
+    ψ0s::Vector{T},
     tlist::AbstractVector;
     alg::OrdinaryDiffEqAlgorithm = Tsit5(),
     e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
     params = NullParameters(),
+    iterate_params::Bool = false,
     progress_bar::Union{Val,Bool} = Val(false),
     inplace::Union{Val,Bool} = Val(true),
-    iterate_params::Bool = false,
     backend = EnsembleThreads(),
     kwargs...,) where T<:QuantumObject{Ket}
 
-    params_init = params
-    if iterate_params
-        params_init = params[1]
+    if !iterate_params
+        params_to_iterate = [params]
+    else
+        params_to_iterate = params
     end
-
+    params_init = params_to_iterate[1]
+    
     prob_init = sesolveProblem(
         H,
         ψ0s[1],
@@ -87,24 +89,18 @@ function sesolve(
         kwargs...,
     )
 
-    if iterate_params
-        full_iterator = Iterators.product(ψ0s, params)
-    elseif !(params == NullParameters())
-        full_iterator = Iterators.product(ψ0s, [params])
-    else
-        full_iterator = Iterators.product(ψ0s, [NullParameters()])
+    full_iterator = Matrix{Tuple{QuantumObject{Ket}, typeof(params_to_iterate[1])}}(undef, length(ψ0s), length(params_to_iterate))
+    for i in 1:length(ψ0s)
+        for j in 1:length(params_to_iterate)
+            full_iterator[i, j] = (ψ0s[i], params_to_iterate[j])
+        end
     end
-    full_iterator = collect(full_iterator)
+    
     trajectories = length(full_iterator)
 
     function ensemble_func(prob, i, repeat)
         p = full_iterator[i][2]
-        if (p isa NullParameters) || !(iterate_params)
-            return remake(prob, u0 = full_iterator[i][1].data)
-        
-        else
-            return remake(prob, u0 = full_iterator[i][1].data; p = p)
-        end
+        return remake(prob, u0 = full_iterator[i][1].data; p = p)
     end
     
     ensemble_prob = EnsembleTimeEvolutionProblem(prob_init, ensemble_func, full_iterator, trajectories)
