@@ -6,6 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased](https://github.com/qutip/QuantumToolbox.jl/tree/main)
+- Added propagator functionality. Part of issue ([#521])
 
 ## [v0.35.0]
 Release date: 2025-09-03
@@ -310,6 +311,7 @@ Release date: 2024-11-13
 [#515]: https://github.com/qutip/QuantumToolbox.jl/issues/515
 [#517]: https://github.com/qutip/QuantumToolbox.jl/issues/517
 [#520]: https://github.com/qutip/QuantumToolbox.jl/issues/520
+[#521]: https://github.com/qutip/QuantumToolbox.jl/issues/521
 [#531]: https://github.com/qutip/QuantumToolbox.jl/issues/531
 [#536]: https://github.com/qutip/QuantumToolbox.jl/issues/536
 [#537]: https://github.com/qutip/QuantumToolbox.jl/issues/537
