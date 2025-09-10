@@ -50,7 +50,7 @@ Generate the ODEProblem for the Schrödinger time evolution of a quantum system:
 """
 function sesolveProblem(
     H::Union{AbstractQuantumObject{Operator},Tuple},
-    ψ0::QuantumObject{Ket},
+    ψ0::Union{QuantumObject{Ket}, AbstractArray{QuantumObject{Ket}}},
     tlist::AbstractVector;
     e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
     params = NullParameters(),
@@ -58,6 +58,8 @@ function sesolveProblem(
     inplace::Union{Val,Bool} = Val(true),
     kwargs...,
 )
+    states = isa(ψ0, AbstractArray) ? ψ0 : [ψ0]
+
     haskey(kwargs, :save_idxs) &&
         throw(ArgumentError("The keyword argument \"save_idxs\" is not supported in QuantumToolbox."))
 
@@ -65,10 +67,13 @@ function sesolveProblem(
 
     H_evo = _sesolve_make_U_QobjEvo(H) # Multiply by -i
     isoper(H_evo) || throw(ArgumentError("The Hamiltonian must be an Operator."))
-    check_dimensions(H_evo, ψ0)
+    for ψ in states
+        check_dimensions(H_evo, ψ)
+    end
 
-    T = Base.promote_eltype(H_evo, ψ0)
-    ψ0 = to_dense(_complex_float_type(T), get_data(ψ0)) # Convert it to dense vector with complex element type
+    T = Base.promote_eltype(H_evo, states[1])
+    #ψ0 = to_dense(_complex_float_type(T), get_data(ψ0)) # Convert it to dense vector with complex element type
+    ψ0 = hcat([to_dense(_complex_float_type(T), get_data(ψ)) for ψ in states]...) # Convert it to dense vector with complex element type
     U = H_evo.data
 
     kwargs2 = _merge_saveat(tlist, e_ops, DEFAULT_ODE_SOLVER_OPTIONS; kwargs...)
@@ -126,7 +131,7 @@ Time evolution of a closed quantum system using the Schrödinger equation:
 """
 function sesolve(
     H::Union{AbstractQuantumObject{Operator},Tuple},
-    ψ0::QuantumObject{Ket},
+    ψ0::Union{QuantumObject{Ket}, AbstractArray{QuantumObject{Ket}}},
     tlist::AbstractVector;
     alg::OrdinaryDiffEqAlgorithm = Tsit5(),
     e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
@@ -163,8 +168,10 @@ end
 function sesolve(prob::TimeEvolutionProblem, alg::OrdinaryDiffEqAlgorithm = Tsit5(); kwargs...)
     sol = solve(prob.prob, alg; kwargs...)
 
-    ψt = map(ϕ -> QuantumObject(ϕ, type = Ket(), dims = prob.dimensions), sol.u)
-
+    ψt = [map(ϕ -> QuantumObject(ϕ, type = Ket(), dims = prob.dimensions), sol.u[i]) for i in 1:length(sol.u)] # Convert to QuantumObject{Ket}
+    if length(ψt) == 1
+        ψt = ψt[1] # If only one initial state, return a single array instead of an array of arrays
+    end
     kwargs = NamedTuple(sol.prob.kwargs) # Convert to NamedTuple for Zygote.jl compatibility
 
     return TimeEvolutionSol(
